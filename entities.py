@@ -89,8 +89,8 @@ class Player(Entity):
             color=config.COLOR_PLAYER,
             name="Dwarf",
             max_hp=30,
-            power=5,
-            defense=2,
+            power=3,   # unarmed is weak; a weapon is a real upgrade
+            defense=1,  # base toughness; armor stacks meaningfully on top
         )
         self.inventory = Inventory(config.INVENTORY_CAPACITY)
         self.equipment = Equipment()

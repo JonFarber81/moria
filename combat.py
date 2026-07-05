@@ -20,15 +20,12 @@ def resolve_attack(attacker: Entity, defender: Entity) -> list[str]:
     defender's hp; the caller is responsible for removing it if it dies
     (checked via `defender.is_alive`).
     """
-    damage = max(0, attacker.power - defender.defense)
-    messages: list[str] = []
+    # Minimum-1 floor: armor reduces damage but never fully negates a hit, so
+    # no amount of defense makes a combatant invulnerable.
+    damage = max(1, attacker.power - defender.defense)
+    defender.hp -= damage
 
-    if damage > 0:
-        defender.hp -= damage
-        messages.append(f"{attacker.name} hits {defender.name} for {damage} damage.")
-    else:
-        messages.append(f"{attacker.name} hits {defender.name}, but it does no damage.")
-
+    messages = [f"{attacker.name} hits {defender.name} for {damage} damage."]
     if not defender.is_alive:
         messages.append(f"{defender.name} dies!")
 

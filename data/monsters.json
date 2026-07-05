@@ -3,8 +3,8 @@
     "name": "Orc",
     "char": "o",
     "color": [63, 127, 63],
-    "max_hp": 10,
-    "power": 3,
+    "max_hp": 14,
+    "power": 5,
     "defense": 0
   }
 }
