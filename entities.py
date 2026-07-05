@@ -216,6 +216,17 @@ MONSTER_TYPES: dict[str, dict] = _load_data("monsters.json")
 ITEM_TYPES: dict[str, dict] = _load_data("items.json")
 
 
+def monster_types_for_depth(depth: int) -> list[str]:
+    """Keys of every monster whose min_depth has been reached at `depth`.
+    Deeper levels keep the shallow foes and add tougher ones on top, so the
+    danger grows without shallow creatures ever vanishing entirely."""
+    return [
+        key
+        for key, data in MONSTER_TYPES.items()
+        if data.get("min_depth", 1) <= depth
+    ]
+
+
 def blocking_monster_at(monsters: list[Monster], x: int, y: int) -> Monster | None:
     """Return the living monster standing on (x, y), if any. Used to turn a
     move into a bump-attack."""

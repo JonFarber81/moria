@@ -24,9 +24,11 @@ from entities import (
     Monster,
     Player,
     blocking_monster_at,
+    monster_types_for_depth,
 )
 from fov import update_fov
 from game_map import DOWN_STAIRS, GameMap, RectangularRoom, generate_dungeon
+from levels import level_arrival, level_name
 from message_log import MessageLog
 from render import (
     render_entity,
@@ -49,12 +51,14 @@ MENU_TITLES = {
 
 
 def place_monsters(
-    rooms: list[RectangularRoom], game_map: GameMap
+    rooms: list[RectangularRoom], game_map: GameMap, depth: int
 ) -> list[Monster]:
-    """Scatter 0..MAX_MONSTERS_PER_ROOM orcs through every room except the
-    first (the player's start stays safe)."""
+    """Scatter 0..MAX_MONSTERS_PER_ROOM monsters through every room except the
+    first (the player's start stays safe). The pool of creature types widens
+    with depth, so deeper levels grow more dangerous."""
     monsters: list[Monster] = []
     occupied: set[tuple[int, int]] = set()
+    eligible = monster_types_for_depth(depth)
 
     for room in rooms[1:]:
         for _ in range(random.randint(0, config.MAX_MONSTERS_PER_ROOM)):
@@ -63,7 +67,7 @@ def place_monsters(
             if (x, y) in occupied or not game_map.walkable(x, y):
                 continue
             occupied.add((x, y))
-            monsters.append(Monster.spawn("orc", x, y))
+            monsters.append(Monster.spawn(random.choice(eligible), x, y))
 
     return monsters
 
@@ -88,13 +92,14 @@ def place_items(rooms: list[RectangularRoom], game_map: GameMap) -> list[Item]:
 
 
 def build_level(
-    player: Player,
+    player: Player, depth: int
 ) -> tuple[GameMap, list[RectangularRoom], list[Monster], list[Item]]:
-    """Generate a fresh dungeon level, populate it, and drop the player in the
-    first room. The player object itself persists (hp, inventory, equipment
-    carry between levels) — only the surrounding level is new."""
+    """Generate a fresh dungeon level for the given depth, populate it, and drop
+    the player in the first room. The player object itself persists (hp,
+    inventory, equipment carry between levels) — only the surrounding level is
+    new; deeper levels draw from a tougher monster pool."""
     game_map, rooms = generate_dungeon(config.MAP_WIDTH, config.MAP_HEIGHT)
-    monsters = place_monsters(rooms, game_map)
+    monsters = place_monsters(rooms, game_map, depth)
     floor_items = place_items(rooms, game_map)
     player.x, player.y = rooms[0].center
     update_fov(game_map, player.x, player.y, config.FOV_RADIUS)
@@ -173,9 +178,11 @@ def main() -> None:
     # only repositions it and rebuilds the world around it.
     player = Player(0, 0)
     depth = 1
-    game_map, rooms, monsters, floor_items = build_level(player)
+    game_map, rooms, monsters, floor_items = build_level(player, depth)
 
     message_log = MessageLog()
+    message_log.add(f"{level_name(depth)} (depth {depth}).")
+    message_log.add(level_arrival(depth))
     mode = MODE_PLAY
 
     console = tcod.console.Console(config.SCREEN_WIDTH, config.SCREEN_HEIGHT, order="F")
@@ -230,8 +237,9 @@ def main() -> None:
                         # '>' descends, but only while standing on the stairs.
                         if game_map.tiles[player.y, player.x] == DOWN_STAIRS:
                             depth += 1
-                            game_map, rooms, monsters, floor_items = build_level(player)
-                            message_log.add(f"You descend the stairs to depth {depth}.")
+                            game_map, rooms, monsters, floor_items = build_level(player, depth)
+                            message_log.add(f"You descend to {level_name(depth)} (depth {depth}).")
+                            message_log.add(level_arrival(depth))
                         else:
                             message_log.add("There are no stairs here to descend.")
                 else:

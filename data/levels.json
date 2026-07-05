@@ -1,0 +1,42 @@
+[
+  {
+    "name": "The East-gate",
+    "arrival": "Grey daylight fades behind you as you pass beneath the great arch."
+  },
+  {
+    "name": "Old Moria",
+    "arrival": "The oldest halls. The shadows are thick with ghosts, and a faint stench of burnt flesh lingers."
+  },
+  {
+    "name": "The Dwarrowdelf",
+    "arrival": "Durin's city opens around you, vast and dark -- once full of light, now one great tomb."
+  },
+  {
+    "name": "The Chamber of Mazarbul",
+    "arrival": "Iron-bound chests of crumbling records line the walls. Something died defending this room."
+  },
+  {
+    "name": "The Deeps",
+    "arrival": "Below the city, the planned halls give way to an endless, unplanned labyrinth."
+  },
+  {
+    "name": "The Armouries of the Third Deep",
+    "arrival": "Racks of dwarven arms -- and the poisoned dead who still guard them, as if only sleeping."
+  },
+  {
+    "name": "Goblin Village",
+    "arrival": "Cook-fires gutter in an old market square. Yellow eyes track you from the dark."
+  },
+  {
+    "name": "The Udun-Temple",
+    "arrival": "The air thickens with soot and ash. A single word echoes through the smoke: Ghash. Fire."
+  },
+  {
+    "name": "The Den of Forgotten Stars",
+    "arrival": "Flecks of mithril glitter in the walls like a sky of forgotten stars."
+  },
+  {
+    "name": "The Balrog's Throne",
+    "arrival": "The darkness here is absolute. Flames burn but shed no light. You should not have delved so deep."
+  }
+]

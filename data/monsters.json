@@ -1,10 +1,56 @@
 {
   "orc": {
-    "name": "Orc",
+    "name": "Orc of Moria",
     "char": "o",
     "color": [63, 127, 63],
     "max_hp": 14,
     "power": 5,
-    "defense": 0
+    "defense": 0,
+    "min_depth": 1
+  },
+  "cave_bat": {
+    "name": "Cave Bat",
+    "char": "b",
+    "color": [130, 100, 60],
+    "max_hp": 6,
+    "power": 3,
+    "defense": 0,
+    "min_depth": 1
+  },
+  "stone_toad": {
+    "name": "Stone Toad",
+    "char": "t",
+    "color": [110, 120, 90],
+    "max_hp": 22,
+    "power": 4,
+    "defense": 3,
+    "min_depth": 2
+  },
+  "orc_of_udun": {
+    "name": "Orc of Udun",
+    "char": "o",
+    "color": [200, 80, 40],
+    "max_hp": 16,
+    "power": 7,
+    "defense": 1,
+    "min_depth": 3
+  },
+  "ash_wraith": {
+    "name": "Ash-wraith",
+    "char": "w",
+    "color": [230, 140, 50],
+    "max_hp": 12,
+    "power": 6,
+    "defense": 0,
+    "min_depth": 4
+  },
+  "marrow_eater": {
+    "name": "Marrow-eater",
+    "char": "m",
+    "color": [180, 200, 210],
+    "max_hp": 16,
+    "power": 8,
+    "defense": 1,
+    "min_depth": 5
   }
 }
