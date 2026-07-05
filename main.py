@@ -6,31 +6,37 @@ resolution in combat.
 """
 from __future__ import annotations
 
+import random
+
 import tcod
 
 import combat
 import config
 from entities import Monster, Player, blocking_monster_at
 from fov import update_fov
-from game_map import GameMap, RectangularRoom
+from game_map import GameMap, RectangularRoom, generate_dungeon
 from render import render_entity, render_map, render_ui
 
 
-def build_map() -> tuple[GameMap, RectangularRoom]:
-    """Step 1: a single hardcoded room in the middle of the map."""
-    game_map = GameMap(config.MAP_WIDTH, config.MAP_HEIGHT)
-    room = RectangularRoom(x=30, y=18, width=20, height=10)
-    game_map.carve_room(room)
-    return game_map, room
+def place_monsters(
+    rooms: list[RectangularRoom], game_map: GameMap
+) -> list[Monster]:
+    """Scatter 0..MAX_MONSTERS_PER_ROOM orcs through every room except the
+    first (the player's start stays safe). Skips tiles already taken so two
+    orcs never share a square."""
+    monsters: list[Monster] = []
+    occupied: set[tuple[int, int]] = set()
 
+    for room in rooms[1:]:
+        for _ in range(random.randint(0, config.MAX_MONSTERS_PER_ROOM)):
+            x = random.randint(room.x1 + 1, room.x2 - 1)
+            y = random.randint(room.y1 + 1, room.y2 - 1)
+            if (x, y) in occupied or not game_map.walkable(x, y):
+                continue
+            occupied.add((x, y))
+            monsters.append(Monster.spawn("orc", x, y))
 
-def spawn_monsters() -> list[Monster]:
-    """Step 4: a couple of hardcoded orcs to fight. Procedural placement
-    arrives with the dungeon generator in Step 5."""
-    return [
-        Monster.spawn("orc", x=45, y=25),
-        Monster.spawn("orc", x=34, y=20),
-    ]
+    return monsters
 
 
 def player_action(
@@ -71,9 +77,9 @@ def monsters_turn(
 
 
 def main() -> None:
-    game_map, room = build_map()
-    player = Player(*room.center)
-    monsters = spawn_monsters()
+    game_map, rooms = generate_dungeon(config.MAP_WIDTH, config.MAP_HEIGHT)
+    player = Player(*rooms[0].center)  # start in the first room
+    monsters = place_monsters(rooms, game_map)
     update_fov(game_map, player.x, player.y, config.FOV_RADIUS)
 
     console = tcod.console.Console(config.SCREEN_WIDTH, config.SCREEN_HEIGHT, order="F")

@@ -8,7 +8,11 @@ drop in cleanly later.
 """
 from __future__ import annotations
 
+import random
+
 import numpy as np
+
+import config
 
 # --- Tile types -----------------------------------------------------------
 # Small integer codes. render.py owns how each one is drawn.
@@ -42,6 +46,16 @@ class RectangularRoom:
         because NumPy indexes rows (y) first.
         """
         return slice(self.y1 + 1, self.y2), slice(self.x1 + 1, self.x2)
+
+    def intersects(self, other: RectangularRoom) -> bool:
+        """True if this room overlaps `other` (including touching edges).
+        Used to reject candidate rooms so they don't merge into blobs."""
+        return (
+            self.x1 <= other.x2
+            and self.x2 >= other.x1
+            and self.y1 <= other.y2
+            and self.y2 >= other.y1
+        )
 
 
 class GameMap:
@@ -86,3 +100,69 @@ class GameMap:
         wall border); this method stays dumb and just paints FLOOR there.
         """
         self.tiles[room.inner] = FLOOR
+
+    def carve_tunnel(
+        self, start: tuple[int, int], end: tuple[int, int]
+    ) -> None:
+        """Carve an L-shaped corridor between two points (room centers).
+
+        The bend goes horizontal-then-vertical or vertical-then-horizontal,
+        chosen at random, which keeps corridors from all sharing the same
+        elbow orientation and makes the map feel less uniform.
+        """
+        x1, y1 = start
+        x2, y2 = end
+        if random.random() < 0.5:
+            corner = (x2, y1)  # move horizontally first, then vertically
+        else:
+            corner = (x1, y2)  # move vertically first, then horizontally
+
+        self._carve_straight(start, corner)
+        self._carve_straight(corner, end)
+
+    def _carve_straight(
+        self, start: tuple[int, int], end: tuple[int, int]
+    ) -> None:
+        """Carve a single horizontal or vertical run of FLOOR between two
+        points that share a row or column. Endpoints inclusive."""
+        x1, y1 = start
+        x2, y2 = end
+        if x1 == x2:  # vertical run
+            lo, hi = sorted((y1, y2))
+            self.tiles[lo : hi + 1, x1] = FLOOR
+        else:  # horizontal run
+            lo, hi = sorted((x1, x2))
+            self.tiles[y1, lo : hi + 1] = FLOOR
+
+
+def generate_dungeon(width: int, height: int) -> tuple[GameMap, list[RectangularRoom]]:
+    """Build a room-and-corridor dungeon.
+
+    Attempts MAX_ROOMS placements of randomly-sized rooms, discarding any that
+    intersect an already-placed room. Each accepted room is tunneled to the
+    previous one, so the sequence of rooms forms a connected chain — every
+    floor tile is reachable from the first room.
+
+    Returns the map and the rooms in placement order (rooms[0] is where the
+    player starts).
+    """
+    dungeon = GameMap(width, height)
+    rooms: list[RectangularRoom] = []
+
+    for _ in range(config.MAX_ROOMS):
+        room_w = random.randint(config.ROOM_MIN_SIZE, config.ROOM_MAX_SIZE)
+        room_h = random.randint(config.ROOM_MIN_SIZE, config.ROOM_MAX_SIZE)
+        # Leave a 1-tile margin so rooms never touch the map border.
+        x = random.randint(0, width - room_w - 1)
+        y = random.randint(0, height - room_h - 1)
+
+        candidate = RectangularRoom(x, y, room_w, room_h)
+        if any(candidate.intersects(other) for other in rooms):
+            continue  # overlaps an existing room; try another placement
+
+        dungeon.carve_room(candidate)
+        if rooms:  # connect to the previously placed room
+            dungeon.carve_tunnel(rooms[-1].center, candidate.center)
+        rooms.append(candidate)
+
+    return dungeon, rooms

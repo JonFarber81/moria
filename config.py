@@ -38,6 +38,12 @@ COLOR_FLOOR_DARK = (25, 25, 30)
 # --- FOV ------------------------------------------------------------------
 FOV_RADIUS = 8  # how many tiles the dwarf's torch reaches
 
+# --- Dungeon generation ---------------------------------------------------
+MAX_ROOMS = 30            # upper bound on placement attempts; overlaps are skipped
+ROOM_MIN_SIZE = 6
+ROOM_MAX_SIZE = 10
+MAX_MONSTERS_PER_ROOM = 2  # 0..this orcs scattered per room (never the first)
+
 # --- Keybinds -------------------------------------------------------------
 # Movement keys -> (dx, dy) deltas. Arrow keys for now; vi-keys / diagonals
 # can be added as extra rows here without touching the input loop.
