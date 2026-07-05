@@ -23,3 +23,6 @@ dist/
 .idea/
 .vscode/
 *.swp
+
+# Source reference material (copyrighted sourcebook PDFs — not for distribution)
+source/
