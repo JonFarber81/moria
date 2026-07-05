@@ -1,37 +1,119 @@
 {
   "dagger": {
-    "name": "Dagger",
+    "name": "Dwarven Dagger",
     "char": "/",
     "color": [140, 140, 150],
     "kind": "weapon",
-    "power_bonus": 2
+    "power_bonus": 2,
+    "min_depth": 1,
+    "weight": 10
+  },
+  "hand_axe": {
+    "name": "Dwarven Hand-axe",
+    "char": "/",
+    "color": [150, 140, 120],
+    "kind": "weapon",
+    "power_bonus": 3,
+    "min_depth": 1,
+    "weight": 8
   },
   "short_sword": {
-    "name": "Short Sword",
+    "name": "Dwarf-forged Sword",
     "char": "/",
     "color": [200, 200, 215],
     "kind": "weapon",
-    "power_bonus": 4
+    "power_bonus": 4,
+    "min_depth": 2,
+    "weight": 7
+  },
+  "war_mattock": {
+    "name": "Tunnel-guard's Mattock",
+    "char": "/",
+    "color": [170, 150, 110],
+    "kind": "weapon",
+    "power_bonus": 5,
+    "min_depth": 4,
+    "weight": 5
+  },
+  "mithril_blade": {
+    "name": "Mithril Blade",
+    "char": "/",
+    "color": [200, 225, 235],
+    "kind": "weapon",
+    "power_bonus": 6,
+    "min_depth": 5,
+    "weight": 3
+  },
+  "durins_axe": {
+    "name": "Durin's Axe",
+    "char": "/",
+    "color": [255, 225, 140],
+    "kind": "weapon",
+    "power_bonus": 8,
+    "min_depth": 8,
+    "weight": 0.3
   },
   "leather_armor": {
-    "name": "Leather Armor",
+    "name": "Leather Jerkin",
     "char": "[",
     "color": [139, 90, 43],
     "kind": "armor",
-    "defense_bonus": 1
+    "defense_bonus": 1,
+    "min_depth": 1,
+    "weight": 10
+  },
+  "ring_mail": {
+    "name": "Ring-mail",
+    "char": "[",
+    "color": [140, 140, 150],
+    "kind": "armor",
+    "defense_bonus": 2,
+    "min_depth": 2,
+    "weight": 7
   },
   "chain_mail": {
-    "name": "Chain Mail",
+    "name": "Dwarven Chain-mail",
     "char": "[",
     "color": [160, 160, 175],
     "kind": "armor",
-    "defense_bonus": 3
+    "defense_bonus": 3,
+    "min_depth": 3,
+    "weight": 5
+  },
+  "mithril_coat": {
+    "name": "Mithril Coat",
+    "char": "[",
+    "color": [200, 225, 235],
+    "kind": "armor",
+    "defense_bonus": 4,
+    "min_depth": 5,
+    "weight": 2
   },
   "healing_potion": {
-    "name": "Healing Potion",
+    "name": "Healing Draught",
     "char": "!",
     "color": [200, 40, 120],
     "kind": "potion",
-    "heal": 10
+    "heal": 10,
+    "min_depth": 1,
+    "weight": 10
+  },
+  "toadstone": {
+    "name": "Toadstone Talisman",
+    "char": "!",
+    "color": [120, 180, 110],
+    "kind": "potion",
+    "heal": 16,
+    "min_depth": 2,
+    "weight": 6
+  },
+  "dwarven_cordial": {
+    "name": "Dwarven Cordial",
+    "char": "!",
+    "color": [220, 180, 90],
+    "kind": "potion",
+    "heal": 25,
+    "min_depth": 4,
+    "weight": 4
   }
 }

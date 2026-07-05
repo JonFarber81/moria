@@ -19,11 +19,11 @@ import combat
 import config
 import inventory
 from entities import (
-    ITEM_TYPES,
     Item,
     Monster,
     Player,
     blocking_monster_at,
+    item_weights_for_depth,
     monster_weights_for_depth,
 )
 from fov import update_fov
@@ -73,12 +73,15 @@ def place_monsters(
     return monsters
 
 
-def place_items(rooms: list[RectangularRoom], game_map: GameMap) -> list[Item]:
+def place_items(
+    rooms: list[RectangularRoom], game_map: GameMap, depth: int
+) -> list[Item]:
     """Scatter random items through every room (the start room included, so
-    the dwarf may find gear immediately)."""
+    the dwarf may find gear immediately). The loot pool improves with depth:
+    basic gear shallow, mithril and named treasures far below."""
     items: list[Item] = []
     occupied: set[tuple[int, int]] = set()
-    item_keys = list(ITEM_TYPES.keys())
+    keys, weights = item_weights_for_depth(depth)
 
     for room in rooms:
         for _ in range(random.randint(0, config.MAX_ITEMS_PER_ROOM)):
@@ -87,7 +90,8 @@ def place_items(rooms: list[RectangularRoom], game_map: GameMap) -> list[Item]:
             if (x, y) in occupied or not game_map.walkable(x, y):
                 continue
             occupied.add((x, y))
-            items.append(Item.spawn(random.choice(item_keys), x, y))
+            key = random.choices(keys, weights=weights, k=1)[0]
+            items.append(Item.spawn(key, x, y))
 
     return items
 
@@ -101,7 +105,7 @@ def build_level(
     new; deeper levels draw from a tougher monster pool."""
     game_map, rooms = generate_dungeon(config.MAP_WIDTH, config.MAP_HEIGHT)
     monsters = place_monsters(rooms, game_map, depth)
-    floor_items = place_items(rooms, game_map)
+    floor_items = place_items(rooms, game_map, depth)
     player.x, player.y = rooms[0].center
     update_fov(game_map, player.x, player.y, config.FOV_RADIUS)
     return game_map, rooms, monsters, floor_items
