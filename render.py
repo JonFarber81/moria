@@ -43,3 +43,14 @@ def render_entity(
     tile. You shouldn't see a monster through a wall or in the dark."""
     if game_map.visible[entity.y, entity.x]:
         console.print(x=entity.x, y=entity.y, text=entity.char, fg=entity.color)
+
+
+def render_ui(console: tcod.console.Console, player: Entity) -> None:
+    """Draw the player's HP on the reserved bottom rows. Minimal for now — a
+    proper message log comes with a later content pass."""
+    console.print(
+        x=1,
+        y=config.MAP_HEIGHT + 1,
+        text=f"HP: {player.hp}/{player.max_hp}",
+        fg=config.COLOR_PLAYER,
+    )

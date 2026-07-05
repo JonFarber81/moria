@@ -1,18 +1,28 @@
-"""Things that live on the map and occupy a tile.
+"""Things that live on the map and occupy a tile: the Player and Monsters.
 
-For now that's just the Player. Monsters (Step 4) will share the Entity base
-but be built from JSON data rather than constructed directly like Player is.
+Combat stats live on Entity now that Step 4 exists. Monster stats are NOT
+hardcoded here — they're loaded from data/monsters.json and stamped onto
+Monster instances, so adding a creature is a data change, not a code change.
 """
 from __future__ import annotations
 
+import json
+from pathlib import Path
+from typing import TYPE_CHECKING
+
+import numpy as np
+import tcod.path
+
+import combat
 import config
+
+if TYPE_CHECKING:
+    from game_map import GameMap
 
 
 class Entity:
-    """Anything drawn at an (x, y) position with a glyph and color.
-
-    Deliberately thin — no stats, no behavior. Combat/HP arrive in Step 4.
-    """
+    """Anything drawn at an (x, y) position with a glyph, color, and (now)
+    combat stats. Non-combatants simply leave the stats at zero."""
 
     def __init__(
         self,
@@ -21,18 +31,35 @@ class Entity:
         char: str,
         color: tuple[int, int, int],
         name: str,
+        max_hp: int = 0,
+        power: int = 0,
+        defense: int = 0,
     ) -> None:
         self.x = x
         self.y = y
         self.char = char
         self.color = color
         self.name = name
+        self.max_hp = max_hp
+        self.hp = max_hp
+        self.power = power
+        self.defense = defense
+
+    @property
+    def is_alive(self) -> bool:
+        """Dead things have run out of hp. Things with no max_hp (future
+        items, decorations) are never 'alive' in the combat sense."""
+        return self.hp > 0
 
     def move(self, dx: int, dy: int) -> None:
-        """Shift position by a delta. Callers decide if the move is legal
-        first — the entity itself doesn't know about walls."""
+        """Shift position by a delta. Callers check legality first."""
         self.x += dx
         self.y += dy
+
+    def distance_to(self, other: Entity) -> int:
+        """Chebyshev distance in tiles — 1 means orthogonally or diagonally
+        adjacent, i.e. within melee reach."""
+        return max(abs(other.x - self.x), abs(other.y - self.y))
 
 
 class Player(Entity):
@@ -45,4 +72,93 @@ class Player(Entity):
             char=config.CHAR_PLAYER,
             color=config.COLOR_PLAYER,
             name="Dwarf",
+            max_hp=30,
+            power=5,
+            defense=2,
         )
+
+
+class Monster(Entity):
+    """A hostile creature. Chases the player when it can see them and strikes
+    when adjacent. Built from a data/monsters.json entry via `spawn`."""
+
+    def take_turn(
+        self, target: Entity, game_map: GameMap, monsters: list[Monster]
+    ) -> list[str]:
+        """Act for one turn against `target` (the player).
+
+        Only acts while in the player's field of view — off-screen monsters
+        idle, which keeps the dungeon quiet and pathfinding cheap. When
+        adjacent it attacks; otherwise it steps one tile along the shortest
+        path toward the player.
+        """
+        if not game_map.visible[self.y, self.x]:
+            return []  # can't see the dwarf's torchlight; stay put
+
+        if self.distance_to(target) <= 1:
+            return combat.resolve_attack(self, target)
+
+        path = self._path_to(target.x, target.y, game_map, monsters)
+        if path:
+            next_x, next_y = path[0]
+            self.x, self.y = next_x, next_y
+        return []
+
+    def _path_to(
+        self, dest_x: int, dest_y: int, game_map: GameMap, monsters: list[Monster]
+    ) -> list[tuple[int, int]]:
+        """Shortest 4-directional path to (dest_x, dest_y) as a list of
+        (x, y) steps, excluding the monster's own tile. Empty if unreachable.
+
+        Uses tcod's pathfinder over a cost grid: walkable tiles cost 1, walls
+        are impassable (cost 0), and tiles occupied by *other* living monsters
+        get a high cost so orcs route around each other instead of stacking.
+        """
+        cost = np.where(game_map.tiles == 1, 1, 0).astype(np.int8)  # 1 == FLOOR
+
+        for other in monsters:
+            if other is not self and other.is_alive and cost[other.y, other.x]:
+                cost[other.y, other.x] += 10  # passable but strongly avoided
+
+        # cardinal=1, diagonal=0 -> orthogonal movement, matching the player.
+        graph = tcod.path.SimpleGraph(cost=cost, cardinal=1, diagonal=0)
+        pathfinder = tcod.path.Pathfinder(graph)
+        pathfinder.add_root((self.y, self.x))  # (y, x) index order
+
+        # path_to includes the start; drop it and convert (y, x) -> (x, y).
+        path = pathfinder.path_to((dest_y, dest_x))[1:].tolist()
+        return [(x, y) for (y, x) in path]
+
+    @classmethod
+    def spawn(cls, type_key: str, x: int, y: int) -> Monster:
+        """Build a monster of the given type from loaded JSON data."""
+        data = MONSTER_TYPES[type_key]
+        return cls(
+            x=x,
+            y=y,
+            char=data["char"],
+            color=tuple(data["color"]),
+            name=data["name"],
+            max_hp=data["max_hp"],
+            power=data["power"],
+            defense=data["defense"],
+        )
+
+
+def _load_monster_types() -> dict[str, dict]:
+    """Read every monster definition from data/monsters.json once at import."""
+    path = Path(__file__).parent / "data" / "monsters.json"
+    with open(path, encoding="utf-8") as f:
+        return json.load(f)
+
+
+MONSTER_TYPES: dict[str, dict] = _load_monster_types()
+
+
+def blocking_monster_at(monsters: list[Monster], x: int, y: int) -> Monster | None:
+    """Return the living monster standing on (x, y), if any. Used to turn a
+    move into a bump-attack."""
+    for monster in monsters:
+        if monster.is_alive and monster.x == x and monster.y == y:
+            return monster
+    return None
