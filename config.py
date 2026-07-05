@@ -54,7 +54,7 @@ MAX_ROOMS = 30            # upper bound on placement attempts; overlaps are skip
 ROOM_MIN_SIZE = 6
 ROOM_MAX_SIZE = 10
 MAX_MONSTERS_PER_ROOM = 2  # 0..this orcs scattered per room (never the first)
-MAX_ITEMS_PER_ROOM = 2     # 0..this items scattered per room (first included)
+MAX_ITEMS_PER_ROOM = 1     # 0..this items scattered per room (first included)
 
 # --- Inventory ------------------------------------------------------------
 INVENTORY_CAPACITY = 26    # a-z selectable slots

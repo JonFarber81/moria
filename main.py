@@ -88,13 +88,18 @@ def place_items(rooms: list[RectangularRoom], game_map: GameMap) -> list[Item]:
 
 
 def player_action(
-    player: Player, game_map: GameMap, monsters: list[Monster], dx: int, dy: int
+    player: Player,
+    game_map: GameMap,
+    monsters: list[Monster],
+    floor_items: list[Item],
+    dx: int,
+    dy: int,
 ) -> inventory.TurnResult:
     """Resolve a movement key into (messages, took_turn).
 
     Bumping a monster attacks it (turn spent); bumping a walkable tile moves
-    and updates FOV (turn spent, no message); bumping a wall does nothing
-    (no turn)."""
+    and updates FOV (turn spent, and notes any items underfoot); bumping a
+    wall does nothing (no turn)."""
     dest_x, dest_y = player.x + dx, player.y + dy
 
     target = blocking_monster_at(monsters, dest_x, dest_y)
@@ -104,9 +109,20 @@ def player_action(
     if game_map.walkable(dest_x, dest_y):
         player.move(dx, dy)
         update_fov(game_map, player.x, player.y, config.FOV_RADIUS)
-        return ([], True)
+        return (_items_underfoot_message(player, floor_items), True)
 
     return ([], False)  # bumped a wall — no turn taken
+
+
+def _items_underfoot_message(player: Player, floor_items: list[Item]) -> list[str]:
+    """A 'you see ...' line for whatever the player just stepped onto, or no
+    message if the tile is bare."""
+    here = [it for it in floor_items if it.x == player.x and it.y == player.y]
+    if len(here) == 1:
+        return [f"You see a {here[0].name} here."]
+    if len(here) > 1:
+        return ["You see several items here."]
+    return []
 
 
 def monsters_turn(
@@ -184,7 +200,7 @@ def main() -> None:
                     if sym in config.MOVE_KEYS:
                         dx, dy = config.MOVE_KEYS[sym]
                         apply_result(
-                            player_action(player, game_map, monsters, dx, dy),
+                            player_action(player, game_map, monsters, floor_items, dx, dy),
                             player, game_map, monsters, message_log,
                         )
                     elif sym == config.KEY_PICKUP:
