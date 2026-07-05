@@ -10,7 +10,7 @@ import tcod.console
 
 import config
 from entities import Entity, Player
-from game_map import FLOOR, WALL, GameMap
+from game_map import DOWN_STAIRS, FLOOR, WALL, GameMap
 from message_log import MessageLog
 
 # Tile type -> (character, lit color, dark/remembered color). Adding a new
@@ -18,6 +18,7 @@ from message_log import MessageLog
 TILE_GRAPHICS: dict[int, tuple[str, tuple[int, int, int], tuple[int, int, int]]] = {
     WALL: (config.CHAR_WALL, config.COLOR_WALL, config.COLOR_WALL_DARK),
     FLOOR: (config.CHAR_FLOOR, config.COLOR_FLOOR, config.COLOR_FLOOR_DARK),
+    DOWN_STAIRS: (config.CHAR_DOWN_STAIRS, config.COLOR_STAIRS, config.COLOR_STAIRS_DARK),
 }
 
 
@@ -46,13 +47,17 @@ def render_entity(
         console.print(x=entity.x, y=entity.y, text=entity.char, fg=entity.color)
 
 
-def render_ui(console: tcod.console.Console, player: Player) -> None:
-    """Draw HP plus effective attack/defense on the reserved bottom panel.
-    Showing Atk/Def here makes equipment changes immediately legible."""
+def render_ui(console: tcod.console.Console, player: Player, depth: int) -> None:
+    """Draw HP, effective attack/defense, and dungeon depth on the bottom
+    panel. Showing Atk/Def here makes equipment changes immediately legible."""
     console.print(
         x=config.LOG_X,
         y=config.UI_HP_Y,
-        text=f"HP: {player.hp}/{player.max_hp}   Atk: {player.power}   Def: {player.defense}",
+        text=(
+            f"HP: {player.hp}/{player.max_hp}   "
+            f"Atk: {player.power}   Def: {player.defense}   "
+            f"Depth: {depth}"
+        ),
         fg=config.COLOR_PLAYER,
     )
 

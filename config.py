@@ -21,6 +21,7 @@ MAP_HEIGHT = 45  # a few rows reserved at the bottom for a future message log
 CHAR_WALL = "#"
 CHAR_FLOOR = "."
 CHAR_PLAYER = "@"
+CHAR_DOWN_STAIRS = ">"
 
 # --- Colors (R, G, B) -----------------------------------------------------
 # tcod accepts (r, g, b) tuples in 0-255. Distinct fg/bg per tile type lets us
@@ -34,6 +35,9 @@ COLOR_BLACK = (0, 0, 0)
 # mine). Same glyphs, muted color, so the map you've walked stays as a ghost.
 COLOR_WALL_DARK = (45, 40, 25)
 COLOR_FLOOR_DARK = (25, 25, 30)
+
+COLOR_STAIRS = (255, 225, 140)   # down-stairs, bright gold (lit)
+COLOR_STAIRS_DARK = (70, 62, 38)  # remembered
 
 # UI text
 COLOR_TEXT = (200, 200, 200)     # default message-log color
@@ -77,3 +81,7 @@ KEY_PICKUP = tcod.event.KeySym.g       # pick up item under the player
 KEY_INVENTORY = tcod.event.KeySym.i    # open inventory to use/equip
 KEY_DROP = tcod.event.KeySym.d         # open inventory to drop
 KEY_CANCEL = tcod.event.KeySym.ESCAPE  # close a menu
+
+# Descend the down-stairs. '>' is Shift + '.', so we match the PERIOD key with
+# Shift held (checked in the input loop).
+KEY_DESCEND = tcod.event.KeySym.PERIOD

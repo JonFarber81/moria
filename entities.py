@@ -15,6 +15,7 @@ import tcod.path
 
 import combat
 import config
+from game_map import WALL
 from inventory import Equipment, Inventory
 
 if TYPE_CHECKING:
@@ -132,7 +133,7 @@ class Monster(Entity):
         are impassable (cost 0), and tiles occupied by *other* living monsters
         get a high cost so orcs route around each other instead of stacking.
         """
-        cost = np.where(game_map.tiles == 1, 1, 0).astype(np.int8)  # 1 == FLOOR
+        cost = np.where(game_map.tiles != WALL, 1, 0).astype(np.int8)  # walls block
 
         for other in monsters:
             if other is not self and other.is_alive and cost[other.y, other.x]:

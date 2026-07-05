@@ -15,9 +15,13 @@ import numpy as np
 import config
 
 # --- Tile types -----------------------------------------------------------
-# Small integer codes. render.py owns how each one is drawn.
+# Small integer codes. render.py owns how each one is drawn. WALL is the only
+# solid/opaque tile — everything else is walkable and lets light through, which
+# is why walkable() and transparent() below test "not WALL" rather than listing
+# every passable type.
 WALL = 0
 FLOOR = 1
+DOWN_STAIRS = 2
 
 
 class RectangularRoom:
@@ -74,12 +78,16 @@ class GameMap:
         self.visible = np.full((height, width), fill_value=False, dtype=bool)
         self.explored = np.full((height, width), fill_value=False, dtype=bool)
 
+        # Location of the down-stairs, set by generate_dungeon. None on a bare
+        # map (e.g. tests that don't generate rooms).
+        self.down_stairs: tuple[int, int] | None = None
+
     @property
     def transparent(self) -> np.ndarray:
-        """Boolean grid: True where light passes through (floors do, walls
-        don't). Derived from tile types so FOV never falls out of sync with
-        the map. compute_fov consumes this each turn."""
-        return self.tiles == FLOOR
+        """Boolean grid: True where light passes through. Only walls block it,
+        so floors and stairs are transparent. Derived from tile types so FOV
+        never falls out of sync with the map. compute_fov consumes this."""
+        return self.tiles != WALL
 
     def in_bounds(self, x: int, y: int) -> bool:
         """True if (x, y) is inside the map grid."""
@@ -87,11 +95,12 @@ class GameMap:
 
     def walkable(self, x: int, y: int) -> bool:
         """True if an entity may stand on (x, y): in bounds and not solid rock.
+        Floors and stairs are walkable; only walls block movement.
 
         Bounds are checked first so an off-map coordinate never indexes the
         tile array (which would wrap on negatives / raise on overflow).
         """
-        return self.in_bounds(x, y) and self.tiles[y, x] == FLOOR
+        return self.in_bounds(x, y) and self.tiles[y, x] != WALL
 
     def carve_room(self, room: RectangularRoom) -> None:
         """Cut a room's floor out of the surrounding rock.
@@ -164,5 +173,11 @@ def generate_dungeon(width: int, height: int) -> tuple[GameMap, list[Rectangular
         if rooms:  # connect to the previously placed room
             dungeon.carve_tunnel(rooms[-1].center, candidate.center)
         rooms.append(candidate)
+
+    # Down-stairs in the last room carved — farthest along the corridor chain
+    # from the player's start room, so descending means crossing the level.
+    stairs_x, stairs_y = rooms[-1].center
+    dungeon.tiles[stairs_y, stairs_x] = DOWN_STAIRS
+    dungeon.down_stairs = (stairs_x, stairs_y)
 
     return dungeon, rooms

@@ -26,7 +26,7 @@ from entities import (
     blocking_monster_at,
 )
 from fov import update_fov
-from game_map import GameMap, RectangularRoom, generate_dungeon
+from game_map import DOWN_STAIRS, GameMap, RectangularRoom, generate_dungeon
 from message_log import MessageLog
 from render import (
     render_entity,
@@ -85,6 +85,20 @@ def place_items(rooms: list[RectangularRoom], game_map: GameMap) -> list[Item]:
             items.append(Item.spawn(random.choice(item_keys), x, y))
 
     return items
+
+
+def build_level(
+    player: Player,
+) -> tuple[GameMap, list[RectangularRoom], list[Monster], list[Item]]:
+    """Generate a fresh dungeon level, populate it, and drop the player in the
+    first room. The player object itself persists (hp, inventory, equipment
+    carry between levels) — only the surrounding level is new."""
+    game_map, rooms = generate_dungeon(config.MAP_WIDTH, config.MAP_HEIGHT)
+    monsters = place_monsters(rooms, game_map)
+    floor_items = place_items(rooms, game_map)
+    player.x, player.y = rooms[0].center
+    update_fov(game_map, player.x, player.y, config.FOV_RADIUS)
+    return game_map, rooms, monsters, floor_items
 
 
 def player_action(
@@ -155,11 +169,11 @@ def apply_result(
 
 
 def main() -> None:
-    game_map, rooms = generate_dungeon(config.MAP_WIDTH, config.MAP_HEIGHT)
-    player = Player(*rooms[0].center)  # start in the first room
-    monsters = place_monsters(rooms, game_map)
-    floor_items = place_items(rooms, game_map)
-    update_fov(game_map, player.x, player.y, config.FOV_RADIUS)
+    # Player is created first so it survives level regeneration; build_level
+    # only repositions it and rebuilds the world around it.
+    player = Player(0, 0)
+    depth = 1
+    game_map, rooms, monsters, floor_items = build_level(player)
 
     message_log = MessageLog()
     mode = MODE_PLAY
@@ -179,7 +193,7 @@ def main() -> None:
             for monster in monsters:
                 render_entity(console, monster, game_map)
             render_entity(console, player, game_map)
-            render_ui(console, player)
+            render_ui(console, player, depth)
             render_messages(console, message_log)
             if mode != MODE_PLAY:
                 render_inventory_menu(console, player, MENU_TITLES[mode])
@@ -212,6 +226,14 @@ def main() -> None:
                         mode = MODE_USE
                     elif sym == config.KEY_DROP:
                         mode = MODE_DROP
+                    elif sym == config.KEY_DESCEND and (event.mod & tcod.event.Modifier.SHIFT):
+                        # '>' descends, but only while standing on the stairs.
+                        if game_map.tiles[player.y, player.x] == DOWN_STAIRS:
+                            depth += 1
+                            game_map, rooms, monsters, floor_items = build_level(player)
+                            message_log.add(f"You descend the stairs to depth {depth}.")
+                        else:
+                            message_log.add("There are no stairs here to descend.")
                 else:
                     # Inventory menu open: Esc cancels, a-z selects an item.
                     if sym == config.KEY_CANCEL:
