@@ -15,6 +15,7 @@ import tcod.path
 
 import combat
 import config
+from inventory import Equipment, Inventory
 
 if TYPE_CHECKING:
     from game_map import GameMap
@@ -42,13 +43,28 @@ class Entity:
         self.name = name
         self.max_hp = max_hp
         self.hp = max_hp
-        self.power = power
-        self.defense = defense
+        # Base combat stats; effective power/defense (below) add equipment.
+        self.base_power = power
+        self.base_defense = defense
+        # Only the Player wears gear; monsters leave this None (no bonus).
+        self.equipment: Equipment | None = None
+
+    @property
+    def power(self) -> int:
+        """Effective attack: base plus any equipped weapon bonus."""
+        bonus = self.equipment.power_bonus if self.equipment else 0
+        return self.base_power + bonus
+
+    @property
+    def defense(self) -> int:
+        """Effective defense: base plus any equipped armor bonus."""
+        bonus = self.equipment.defense_bonus if self.equipment else 0
+        return self.base_defense + bonus
 
     @property
     def is_alive(self) -> bool:
-        """Dead things have run out of hp. Things with no max_hp (future
-        items, decorations) are never 'alive' in the combat sense."""
+        """Dead things have run out of hp. Things with no max_hp (items,
+        decorations) are never 'alive' in the combat sense."""
         return self.hp > 0
 
     def move(self, dx: int, dy: int) -> None:
@@ -76,6 +92,8 @@ class Player(Entity):
             power=5,
             defense=2,
         )
+        self.inventory = Inventory(config.INVENTORY_CAPACITY)
+        self.equipment = Equipment()
 
 
 class Monster(Entity):
@@ -145,14 +163,56 @@ class Monster(Entity):
         )
 
 
-def _load_monster_types() -> dict[str, dict]:
-    """Read every monster definition from data/monsters.json once at import."""
-    path = Path(__file__).parent / "data" / "monsters.json"
+class Item(Entity):
+    """A pickup lying on the floor or carried in a pack. Not a combatant, so
+    it leaves the hp/power/defense stats at zero; its useful numbers are the
+    kind-specific bonuses below, loaded from data/items.json."""
+
+    def __init__(
+        self,
+        x: int,
+        y: int,
+        char: str,
+        color: tuple[int, int, int],
+        name: str,
+        kind: str,
+        power_bonus: int = 0,
+        defense_bonus: int = 0,
+        heal: int = 0,
+    ) -> None:
+        super().__init__(x=x, y=y, char=char, color=color, name=name)
+        self.kind = kind  # "weapon" | "armor" | "potion"
+        self.power_bonus = power_bonus
+        self.defense_bonus = defense_bonus
+        self.heal = heal
+
+    @classmethod
+    def spawn(cls, type_key: str, x: int, y: int) -> Item:
+        """Build an item of the given type from loaded JSON data. Missing
+        numeric fields default to 0, so a potion needs no power_bonus etc."""
+        data = ITEM_TYPES[type_key]
+        return cls(
+            x=x,
+            y=y,
+            char=data["char"],
+            color=tuple(data["color"]),
+            name=data["name"],
+            kind=data["kind"],
+            power_bonus=data.get("power_bonus", 0),
+            defense_bonus=data.get("defense_bonus", 0),
+            heal=data.get("heal", 0),
+        )
+
+
+def _load_data(filename: str) -> dict[str, dict]:
+    """Read a JSON definition file from data/ once, at import time."""
+    path = Path(__file__).parent / "data" / filename
     with open(path, encoding="utf-8") as f:
         return json.load(f)
 
 
-MONSTER_TYPES: dict[str, dict] = _load_monster_types()
+MONSTER_TYPES: dict[str, dict] = _load_data("monsters.json")
+ITEM_TYPES: dict[str, dict] = _load_data("items.json")
 
 
 def blocking_monster_at(monsters: list[Monster], x: int, y: int) -> Monster | None:

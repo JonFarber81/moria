@@ -54,6 +54,10 @@ MAX_ROOMS = 30            # upper bound on placement attempts; overlaps are skip
 ROOM_MIN_SIZE = 6
 ROOM_MAX_SIZE = 10
 MAX_MONSTERS_PER_ROOM = 2  # 0..this orcs scattered per room (never the first)
+MAX_ITEMS_PER_ROOM = 2     # 0..this items scattered per room (first included)
+
+# --- Inventory ------------------------------------------------------------
+INVENTORY_CAPACITY = 26    # a-z selectable slots
 
 # --- Keybinds -------------------------------------------------------------
 # Movement keys -> (dx, dy) deltas. Arrow keys for now; vi-keys / diagonals
@@ -65,5 +69,11 @@ MOVE_KEYS: dict[tcod.event.KeySym, tuple[int, int]] = {
     tcod.event.KeySym.RIGHT: (1, 0),
 }
 
-# Keys that quit the game.
+# Keys that quit the game (in normal play).
 QUIT_KEYS = (tcod.event.KeySym.ESCAPE, tcod.event.KeySym.q)
+
+# Item / inventory keys.
+KEY_PICKUP = tcod.event.KeySym.g       # pick up item under the player
+KEY_INVENTORY = tcod.event.KeySym.i    # open inventory to use/equip
+KEY_DROP = tcod.event.KeySym.d         # open inventory to drop
+KEY_CANCEL = tcod.event.KeySym.ESCAPE  # close a menu

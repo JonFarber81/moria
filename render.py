@@ -9,7 +9,7 @@ from __future__ import annotations
 import tcod.console
 
 import config
-from entities import Entity
+from entities import Entity, Player
 from game_map import FLOOR, WALL, GameMap
 from message_log import MessageLog
 
@@ -46,14 +46,48 @@ def render_entity(
         console.print(x=entity.x, y=entity.y, text=entity.char, fg=entity.color)
 
 
-def render_ui(console: tcod.console.Console, player: Entity) -> None:
-    """Draw the player's HP on the reserved bottom panel."""
+def render_ui(console: tcod.console.Console, player: Player) -> None:
+    """Draw HP plus effective attack/defense on the reserved bottom panel.
+    Showing Atk/Def here makes equipment changes immediately legible."""
     console.print(
         x=config.LOG_X,
         y=config.UI_HP_Y,
-        text=f"HP: {player.hp}/{player.max_hp}",
+        text=f"HP: {player.hp}/{player.max_hp}   Atk: {player.power}   Def: {player.defense}",
         fg=config.COLOR_PLAYER,
     )
+
+
+def render_inventory_menu(
+    console: tcod.console.Console, player: Player, title: str
+) -> None:
+    """Draw the inventory as a bordered overlay listing carried items by
+    letter, plus what's currently equipped. `title` says what selecting a
+    letter will do ("Use / equip" or "Drop")."""
+    items = player.inventory.items
+    equipment = player.equipment
+
+    # +2 rows for the two equipment lines, +1 header spacing; min size for a
+    # readable empty menu.
+    width = 40
+    height = max(len(items), 1) + 5
+    x = (config.SCREEN_WIDTH - width) // 2
+    y = (config.MAP_HEIGHT - height) // 2
+
+    console.draw_frame(x, y, width, height, title=title, fg=config.COLOR_TEXT, bg=config.COLOR_BLACK)
+
+    def name_or_none(item) -> str:
+        return item.name if item else "(none)"
+
+    console.print(x + 1, y + 1, f"Weapon: {name_or_none(equipment.weapon)}", fg=config.COLOR_PLAYER)
+    console.print(x + 1, y + 2, f"Armor:  {name_or_none(equipment.armor)}", fg=config.COLOR_PLAYER)
+
+    if not items:
+        console.print(x + 1, y + 4, "(pack is empty)", fg=config.COLOR_TEXT)
+        return
+
+    for i, item in enumerate(items):
+        letter = chr(ord("a") + i)
+        console.print(x + 1, y + 4 + i, f"{letter}) {item.name}", fg=config.COLOR_TEXT)
 
 
 def render_messages(console: tcod.console.Console, log: MessageLog) -> None:
