@@ -35,6 +35,17 @@ COLOR_BLACK = (0, 0, 0)
 COLOR_WALL_DARK = (45, 40, 25)
 COLOR_FLOOR_DARK = (25, 25, 30)
 
+# UI text
+COLOR_TEXT = (200, 200, 200)     # default message-log color
+COLOR_DEATH = (191, 0, 0)        # death / game-over red
+
+# --- UI layout (bottom panel, in the rows below the map) ------------------
+# Map occupies rows 0..MAP_HEIGHT-1; these rows sit beneath it.
+UI_HP_Y = MAP_HEIGHT             # HP readout row
+LOG_X = 1                        # left margin for message lines
+LOG_Y = MAP_HEIGHT + 1           # first message row
+LOG_HEIGHT = SCREEN_HEIGHT - LOG_Y  # how many recent messages fit on screen
+
 # --- FOV ------------------------------------------------------------------
 FOV_RADIUS = 8  # how many tiles the dwarf's torch reaches
 

@@ -15,7 +15,8 @@ import config
 from entities import Monster, Player, blocking_monster_at
 from fov import update_fov
 from game_map import GameMap, RectangularRoom, generate_dungeon
-from render import render_entity, render_map, render_ui
+from message_log import MessageLog
+from render import render_entity, render_map, render_messages, render_ui
 
 
 def place_monsters(
@@ -82,6 +83,8 @@ def main() -> None:
     monsters = place_monsters(rooms, game_map)
     update_fov(game_map, player.x, player.y, config.FOV_RADIUS)
 
+    message_log = MessageLog()
+
     console = tcod.console.Console(config.SCREEN_WIDTH, config.SCREEN_HEIGHT, order="F")
 
     with tcod.context.new(
@@ -96,8 +99,7 @@ def main() -> None:
                 render_entity(console, monster, game_map)
             render_entity(console, player, game_map)
             render_ui(console, player)
-            if not player.is_alive:
-                console.print(x=1, y=config.MAP_HEIGHT + 2, text="You have died.", fg=(191, 0, 0))
+            render_messages(console, message_log)
             context.present(console)
 
             for event in tcod.event.wait():
@@ -114,10 +116,10 @@ def main() -> None:
                         result = player_action(player, game_map, monsters, dx, dy)
                         if result is None:
                             continue  # bumped a wall; monsters don't get a free turn
-                        for line in result:
-                            print(line)
-                        for line in monsters_turn(player, game_map, monsters):
-                            print(line)
+                        message_log.add_all(result)
+                        message_log.add_all(monsters_turn(player, game_map, monsters))
+                        if not player.is_alive:
+                            message_log.add("You have died.", config.COLOR_DEATH)
 
 
 if __name__ == "__main__":

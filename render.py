@@ -11,6 +11,7 @@ import tcod.console
 import config
 from entities import Entity
 from game_map import FLOOR, WALL, GameMap
+from message_log import MessageLog
 
 # Tile type -> (character, lit color, dark/remembered color). Adding a new
 # tile type is a one-row change here plus a constant in game_map.py.
@@ -46,11 +47,24 @@ def render_entity(
 
 
 def render_ui(console: tcod.console.Console, player: Entity) -> None:
-    """Draw the player's HP on the reserved bottom rows. Minimal for now — a
-    proper message log comes with a later content pass."""
+    """Draw the player's HP on the reserved bottom panel."""
     console.print(
-        x=1,
-        y=config.MAP_HEIGHT + 1,
+        x=config.LOG_X,
+        y=config.UI_HP_Y,
         text=f"HP: {player.hp}/{player.max_hp}",
         fg=config.COLOR_PLAYER,
     )
+
+
+def render_messages(console: tcod.console.Console, log: MessageLog) -> None:
+    """Draw the most recent messages in the bottom panel, newest at the
+    bottom. Only the last LOG_HEIGHT lines are shown; older history scrolls
+    off but is retained in the log."""
+    recent = log.messages[-config.LOG_HEIGHT :]
+    for i, message in enumerate(recent):
+        console.print(
+            x=config.LOG_X,
+            y=config.LOG_Y + i,
+            text=message.text,
+            fg=message.fg,
+        )
