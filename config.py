@@ -57,8 +57,14 @@ FOV_RADIUS = 8  # how many tiles the dwarf's torch reaches
 MAX_ROOMS = 30            # upper bound on placement attempts; overlaps are skipped
 ROOM_MIN_SIZE = 6
 ROOM_MAX_SIZE = 10
-MAX_MONSTERS_PER_ROOM = 2  # 0..this orcs scattered per room (never the first)
+MAX_MONSTERS_PER_ROOM = 2  # 0..this monsters scattered per room (never the first)
 MAX_ITEMS_PER_ROOM = 1     # 0..this items scattered per room (first included)
+
+# Spawn weighting: a monster's spawn weight is multiplied by this factor for
+# every level deeper than its min_depth. <1 means shallow (low-min_depth)
+# creatures fade as you descend, so deep levels fill with the tougher foes that
+# unlocked most recently. Lower = sharper difficulty ramp.
+SPAWN_DEPTH_DECAY = 0.55
 
 # --- Inventory ------------------------------------------------------------
 INVENTORY_CAPACITY = 26    # a-z selectable slots

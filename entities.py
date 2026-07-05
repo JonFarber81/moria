@@ -216,15 +216,24 @@ MONSTER_TYPES: dict[str, dict] = _load_data("monsters.json")
 ITEM_TYPES: dict[str, dict] = _load_data("items.json")
 
 
-def monster_types_for_depth(depth: int) -> list[str]:
-    """Keys of every monster whose min_depth has been reached at `depth`.
-    Deeper levels keep the shallow foes and add tougher ones on top, so the
-    danger grows without shallow creatures ever vanishing entirely."""
-    return [
-        key
-        for key, data in MONSTER_TYPES.items()
-        if data.get("min_depth", 1) <= depth
-    ]
+def monster_weights_for_depth(depth: int) -> tuple[list[str], list[float]]:
+    """Return (keys, weights) for every monster eligible at `depth`, suitable
+    for random.choices.
+
+    A monster is eligible once `depth` reaches its min_depth. Its weight is its
+    base `weight` decayed by SPAWN_DEPTH_DECAY for each level below its
+    min_depth — so shallow creatures thin out as you descend and the tougher,
+    recently-unlocked foes come to dominate the deeps.
+    """
+    keys: list[str] = []
+    weights: list[float] = []
+    for key, data in MONSTER_TYPES.items():
+        min_depth = data.get("min_depth", 1)
+        if min_depth <= depth:
+            base = data.get("weight", 10)
+            keys.append(key)
+            weights.append(base * config.SPAWN_DEPTH_DECAY ** (depth - min_depth))
+    return keys, weights
 
 
 def blocking_monster_at(monsters: list[Monster], x: int, y: int) -> Monster | None:

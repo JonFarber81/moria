@@ -24,7 +24,7 @@ from entities import (
     Monster,
     Player,
     blocking_monster_at,
-    monster_types_for_depth,
+    monster_weights_for_depth,
 )
 from fov import update_fov
 from game_map import DOWN_STAIRS, GameMap, RectangularRoom, generate_dungeon
@@ -58,7 +58,7 @@ def place_monsters(
     with depth, so deeper levels grow more dangerous."""
     monsters: list[Monster] = []
     occupied: set[tuple[int, int]] = set()
-    eligible = monster_types_for_depth(depth)
+    keys, weights = monster_weights_for_depth(depth)
 
     for room in rooms[1:]:
         for _ in range(random.randint(0, config.MAX_MONSTERS_PER_ROOM)):
@@ -67,7 +67,8 @@ def place_monsters(
             if (x, y) in occupied or not game_map.walkable(x, y):
                 continue
             occupied.add((x, y))
-            monsters.append(Monster.spawn(random.choice(eligible), x, y))
+            key = random.choices(keys, weights=weights, k=1)[0]
+            monsters.append(Monster.spawn(key, x, y))
 
     return monsters
 
